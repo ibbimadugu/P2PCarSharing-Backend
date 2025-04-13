@@ -20,4 +20,8 @@ function client() {
   return new checkoutNodeJssdk.core.PayPalHttpClient(environment());
 }
 
-export default { client };
+export default {
+  client,
+  OrdersCreateRequest: checkoutNodeJssdk.orders.OrdersCreateRequest,
+  OrdersCaptureRequest: checkoutNodeJssdk.orders.OrdersCaptureRequest,
+};

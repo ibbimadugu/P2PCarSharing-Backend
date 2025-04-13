@@ -1,4 +1,3 @@
-// routes/paymentRoutes.js
 import express from "express";
 import paypal from "../config/paypal.js";
 import Booking from "../models/Booking.js";
@@ -13,14 +12,14 @@ router.post("/create-order", async (req, res) => {
     const booking = await Booking.findById(bookingId);
     if (!booking) return res.status(404).json({ error: "Booking not found" });
 
-    const request = new paypal.orders.OrdersCreateRequest();
+    const request = new paypal.OrdersCreateRequest();
     request.prefer("return=representation");
     request.requestBody({
       intent: "CAPTURE",
       purchase_units: [
         {
           amount: {
-            currency_code: "USD",
+            currency_code: "NGN",
             value: booking.totalPrice.toString(),
           },
         },
@@ -40,12 +39,11 @@ router.post("/capture-order", async (req, res) => {
   const { orderID, bookingId } = req.body;
 
   try {
-    const request = new paypal.orders.OrdersCaptureRequest(orderID);
+    const request = new paypal.OrdersCaptureRequest(orderID);
     request.requestBody({});
 
     const capture = await paypal.client().execute(request);
 
-    // Update booking as paid
     const booking = await Booking.findById(bookingId);
     if (booking) {
       booking.paid = true;
