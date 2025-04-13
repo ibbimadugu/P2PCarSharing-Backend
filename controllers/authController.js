@@ -1,8 +1,8 @@
-// controllers/authController.js
-const User = require("../models/User");
-const bcrypt = require("bcryptjs");
+import User from "../models/User.js"; // Use import with the .js extension
+import bcrypt from "bcryptjs"; // Use import for bcrypt
 
-exports.register = async (req, res) => {
+// Register user
+export const register = async (req, res) => {
   const { name, email, password } = req.body;
   try {
     const existingUser = await User.findOne({ email });
@@ -23,7 +23,8 @@ exports.register = async (req, res) => {
   }
 };
 
-exports.login = async (req, res) => {
+// Login user
+export const login = async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ email });
