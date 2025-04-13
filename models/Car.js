@@ -6,7 +6,7 @@ const carSchema = new mongoose.Schema({
   image: String,
   pricePerDay: Number,
   location: String,
-  owner: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  owner: String,
   isBooked: { type: Boolean, default: false },
   bookedBy: {
     type: mongoose.Schema.Types.ObjectId,
