@@ -13,17 +13,45 @@ export const bookCar = async (req, res) => {
       return res.status(400).json({ message: "Car is unavailable" });
     }
 
+    // Validate car price
+    if (isNaN(car.pricePerDay) || car.pricePerDay <= 0) {
+      return res.status(400).json({ message: "Invalid car price" });
+    }
+
+    // Validate dates
+    const startDateObj = new Date(startDate);
+    const endDateObj = new Date(endDate);
+
+    // Check if startDate and endDate are valid
+    if (isNaN(startDateObj) || isNaN(endDateObj)) {
+      return res.status(400).json({ message: "Invalid start or end date" });
+    }
+
+    // Calculate the number of days
     const totalDays = Math.ceil(
-      (new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)
+      (endDateObj - startDateObj) / (1000 * 60 * 60 * 24)
     );
 
+    // Validate totalDays to be a positive number
+    if (totalDays <= 0) {
+      return res
+        .status(400)
+        .json({ message: "End date must be after start date" });
+    }
+
+    // Calculate total price
     const totalPrice = totalDays * car.pricePerDay;
+
+    // Validate totalPrice to be a valid number
+    if (isNaN(totalPrice) || totalPrice <= 0) {
+      return res.status(400).json({ message: "Invalid price calculation" });
+    }
 
     const booking = new Booking({
       car: carId,
       user: req.user._id,
-      startDate,
-      endDate,
+      startDate: startDateObj,
+      endDate: endDateObj,
       totalPrice,
     });
 
@@ -35,21 +63,7 @@ export const bookCar = async (req, res) => {
 
     res.status(201).json({ message: "Car booked successfully", booking });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Booking failed" });
-  }
-};
-
-// @desc    Get user bookings
-// @route   GET /api/bookings
-// @access  Private
-export const getUserBookings = async (req, res) => {
-  try {
-    const bookings = await Booking.find({ user: req.user._id })
-      .populate("car")
-      .sort({ createdAt: -1 });
-
-    res.status(200).json(bookings);
-  } catch (err) {
-    res.status(500).json({ message: "Failed to fetch bookings" });
   }
 };

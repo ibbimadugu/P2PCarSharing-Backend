@@ -1,7 +1,9 @@
-import User from "../models/User.js"; // Use import with the .js extension
-import bcrypt from "bcryptjs"; // Use import for bcrypt
+// controllers/authController.js
+import jwt from "jsonwebtoken";
+import User from "../models/User.js";
+import bcrypt from "bcryptjs";
 
-// Register user
+// ✅ REGISTER FUNCTION
 export const register = async (req, res) => {
   const { name, email, password } = req.body;
   try {
@@ -15,15 +17,21 @@ export const register = async (req, res) => {
       email,
       password: hashedPassword,
     });
-    res
-      .status(201)
-      .json({ message: "User registered successfully", user: newUser });
+
+    res.status(201).json({
+      message: "User registered successfully",
+      user: {
+        _id: newUser._id,
+        name: newUser.name,
+        email: newUser.email,
+      },
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-// Login user
+// ✅ LOGIN FUNCTION
 export const login = async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -34,7 +42,21 @@ export const login = async (req, res) => {
     if (!isMatch)
       return res.status(400).json({ message: "Invalid credentials" });
 
-    res.status(200).json({ message: "Login successful", user });
+    const token = jwt.sign(
+      { id: user._id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    res.status(200).json({
+      message: "Login successful",
+      token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+      },
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
