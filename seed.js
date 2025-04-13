@@ -80,7 +80,7 @@ mongoose
         title: "Lexus RX 350",
         pricePerDay: 13000,
         location: "Lekki, Lagos",
-        image: "/assets/lexus-rx350.jpg",
+        image: "/assets/lexus-rx350.jpeg",
         owner: "Yewande Akinyemi",
       },
       {
