@@ -1,5 +1,6 @@
 import express from "express";
 import path from "path";
+import { fileURLToPath } from "url"; // Explicitly import fileURLToPath
 import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -12,6 +13,10 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Get the current directory using import.meta.url
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Serve static files from 'assets' folder
 app.use("/assets", express.static(path.join(__dirname, "assets")));
