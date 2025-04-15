@@ -19,7 +19,7 @@ router.post("/create-order", async (req, res) => {
       purchase_units: [
         {
           amount: {
-            currency_code: "NGN",
+            currency_code: "USD",
             value: booking.totalPrice.toString(),
           },
         },

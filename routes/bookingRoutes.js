@@ -1,4 +1,5 @@
 import express from "express";
+import mongoose from "mongoose";
 import { protect } from "../middleware/auth.js";
 import Car from "../models/Car.js";
 import Booking from "../models/Booking.js";
@@ -111,6 +112,45 @@ router.get("/:id", protect, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to retrieve the booking" });
+  }
+});
+
+// PUT /api/bookings/:id/remove-car - Remove car from a booking
+router.put("/:id/remove-car", protect, async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: "Invalid booking ID" });
+    }
+
+    const booking = await Booking.findById(req.params.id).populate("car");
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    if (!booking.user) {
+      return res.status(400).json({ message: "Booking user not found" });
+    }
+
+    if (
+      booking.user.toString() !== req.user._id.toString() &&
+      req.user.role !== "admin"
+    ) {
+      return res.status(403).json({
+        message: "You are not authorized to remove the car from this booking",
+      });
+    }
+
+    // Remove car from booking
+    booking.car = null; // Set the car field to null
+    await booking.save();
+
+    res.status(200).json({ message: "Car removed from booking successfully" });
+  } catch (err) {
+    console.error("Error while removing car from booking:", err);
+    res.status(500).json({
+      message: "Failed to remove the car from the booking",
+      error: err.message,
+    });
   }
 });
 
