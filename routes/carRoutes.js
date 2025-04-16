@@ -1,35 +1,34 @@
 import express from "express";
-import { protect } from "../middleware/auth.js";
 import Car from "../models/Car.js";
-import upload from "../middleware/upload.js"; // <-- added multer upload middleware
+import upload from "../middleware/upload.js"; // Importing upload from middleware
 
 const router = express.Router();
 
 // POST /api/cars - Add a new car with image upload
-router.post("/", protect, upload.single("image"), async (req, res) => {
+router.post("/", upload.single("image"), async (req, res) => {
   try {
-    const { title, pricePerDay, location } = req.body;
+    const { title, pricePerDay, location, owner } = req.body;
 
     const newCar = new Car({
       title,
       pricePerDay,
       location,
-      image: `/uploads/${req.file.filename}`, // <-- image from uploaded file
-      owner: req.user._id,
+      owner,
+      image: req.file ? `/uploads/${req.file.filename}` : null,
     });
 
-    const savedCar = await newCar.save();
-    res.status(201).json(savedCar);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Failed to add car" });
+    await newCar.save();
+    res.status(201).json(newCar);
+  } catch (error) {
+    console.error("Error creating car:", error);
+    res.status(500).json({ message: "Server error creating car" });
   }
 });
 
 // GET /api/cars - List available cars
 router.get("/", async (req, res) => {
   try {
-    const cars = await Car.find({ isBooked: false }).populate("owner", "name");
+    const cars = await Car.find({ isBooked: false });
     res.json(cars);
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch cars" });
