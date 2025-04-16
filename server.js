@@ -33,7 +33,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api/auth", authRoutes);
 app.use("/api/cars", carRoutes);
 app.use("/api/bookings", bookingRoutes);
-app.use("/api/payments", paymentRoutes); // PayPal logic is here
+app.use("/api/payments", paymentRoutes);
 app.use("/api/config/paypal", configRoutes);
 
 // Connect DB & Start Server
