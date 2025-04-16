@@ -23,7 +23,7 @@ export const addCar = async (req, res) => {
       name,
       pricePerDay,
       location,
-      imageUrl,
+      image,
       owner: req.user._id,
     });
 

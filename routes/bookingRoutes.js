@@ -98,11 +98,9 @@ router.get("/:id", protect, async (req, res) => {
       return res.status(404).json({ message: "Booking not found" });
     }
 
-    // Check if the user is the one who booked the car or if the user is an admin
-    if (
-      booking.user.toString() !== req.user._id.toString() &&
-      req.user.role !== "admin"
-    ) {
+    const bookings = await Booking.find({ user: req.user._id }).populate("car");
+    res.status(200).json(bookings);
+    {
       return res
         .status(403)
         .json({ message: "You are not authorized to view this booking" });
@@ -119,26 +117,29 @@ router.get("/:id", protect, async (req, res) => {
 router.delete("/:id", protect, async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id);
-    if (!booking) return res.status(404).json({ message: "Booking not found" });
+    if (!booking) {
+      console.log("Booking not found with ID:", req.params.id);
+      return res.status(404).json({ message: "Booking not found" });
+    }
 
-    if (
-      booking.user.toString() !== req.user._id.toString() &&
-      req.user.role !== "admin"
-    ) {
+    if (booking.user.toString() !== req.user._id.toString()) {
+      console.log("Unauthorized cancel attempt by user", req.user._id);
       return res
         .status(403)
         .json({ message: "Not authorized to delete this booking" });
     }
 
-    // Mark car as available again
     const car = await Car.findById(booking.car);
-    if (car) {
+    if (!car) {
+      console.log("Car not found for booking:", booking._id);
+    } else {
       car.isBooked = false;
       car.bookedBy = null;
       await car.save();
     }
 
     await booking.deleteOne();
+    console.log("Booking deleted:", booking._id);
     res.status(200).json({ message: "Booking cancelled successfully" });
   } catch (err) {
     console.error("Cancel booking error:", err);
