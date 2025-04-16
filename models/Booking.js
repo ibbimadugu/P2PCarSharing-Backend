@@ -3,7 +3,6 @@ import mongoose from "mongoose";
 
 const bookingSchema = new mongoose.Schema({
   car: { type: mongoose.Schema.Types.ObjectId, ref: "Car" },
-  user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   startDate: Date,
   endDate: Date,
   totalPrice: Number,

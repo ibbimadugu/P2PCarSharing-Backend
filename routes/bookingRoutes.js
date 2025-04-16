@@ -113,7 +113,7 @@ router.get("/:id", protect, async (req, res) => {
   }
 });
 
-// DELETE /api/bookings/:id/remove-car - Remove car from a booking
+// DELETE /api/bookings/:id
 router.delete("/:id", protect, async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id);
@@ -122,17 +122,9 @@ router.delete("/:id", protect, async (req, res) => {
       return res.status(404).json({ message: "Booking not found" });
     }
 
-    if (booking.user.toString() !== req.user._id.toString()) {
-      console.log("Unauthorized cancel attempt by user", req.user._id);
-      return res
-        .status(403)
-        .json({ message: "Not authorized to delete this booking" });
-    }
-
+    // Remove car booking status (optional, but good housekeeping)
     const car = await Car.findById(booking.car);
-    if (!car) {
-      console.log("Car not found for booking:", booking._id);
-    } else {
+    if (car) {
       car.isBooked = false;
       car.bookedBy = null;
       await car.save();
@@ -144,6 +136,44 @@ router.delete("/:id", protect, async (req, res) => {
   } catch (err) {
     console.error("Cancel booking error:", err);
     res.status(500).json({ message: "Failed to cancel booking" });
+  }
+});
+
+// PUT /api/bookings/:id/remove-car
+router.put("/:id/remove-car", protect, async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    // Check if the current user is authorized to modify this booking
+    if (
+      booking.user.toString() !== req.user._id.toString() &&
+      req.user.role !== "admin"
+    ) {
+      return res
+        .status(403)
+        .json({ message: "You are not authorized to modify this booking" });
+    }
+
+    // Update the booking by removing the car
+    const car = await Car.findById(booking.car);
+    if (car) {
+      car.isBooked = false;
+      car.bookedBy = null;
+      await car.save();
+    }
+
+    booking.car = null; // Remove car from the booking
+    await booking.save();
+
+    res
+      .status(200)
+      .json({ message: "Car removed from booking successfully", booking });
+  } catch (err) {
+    console.error("Error removing car from booking:", err);
+    res.status(500).json({ message: "Failed to remove car from booking" });
   }
 });
 
