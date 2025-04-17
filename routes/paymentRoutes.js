@@ -1,10 +1,11 @@
+// routes/paymentRoutes.js
 import express from "express";
 import paypal from "../config/paypal.js";
 import Booking from "../models/Booking.js";
 
 const router = express.Router();
 
-// Helper to get PayPal client
+// Get PayPal client instance
 const paypalClient = paypal.client();
 
 // =======================
@@ -41,7 +42,7 @@ router.post("/create-order", async (req, res) => {
 
     res.status(201).json({ orderID: order.result.id });
   } catch (err) {
-    console.error("Error creating PayPal order:", err);
+    console.error("❌ Error creating PayPal order:", err);
     res.status(500).json({ error: "Unable to create PayPal order" });
   }
 });
@@ -76,7 +77,7 @@ router.post("/capture-order", async (req, res) => {
 
     res.json({ message: "Payment successful", details: capture.result });
   } catch (err) {
-    console.error("Error capturing PayPal order:", err);
+    console.error("❌ Error capturing PayPal order:", err);
     res.status(500).json({ error: "Unable to capture PayPal payment" });
   }
 });
