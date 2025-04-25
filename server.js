@@ -6,6 +6,7 @@ import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
 
+// Route Imports
 import authRoutes from "./routes/authRoutes.js";
 import carRoutes from "./routes/carRoutes.js";
 import bookingRoutes from "./routes/bookingRoutes.js";
@@ -15,48 +16,52 @@ import configRoutes from "./routes/configRoutes.js";
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const port = process.env.PORT || 5000;
+const isDev = process.env.NODE_ENV !== "production";
 
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://p2pcarsharing.vercel.app",
-];
-
-// Resolve __dirname in ES modules
+// Resolve __dirname for ES Modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Middleware
+// ======================
+// 🛡️ Middleware
+// ======================
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      return callback(new Error("Not allowed by CORS"));
-    },
+    origin: isDev
+      ? "http://localhost:5173"
+      : "https://p2pcarsharing.vercel.app",
     credentials: true,
   })
 );
 app.use(express.json());
 
-// Static assets
+// ======================
+// 📂 Static Files
+// ======================
 app.use("/assets", express.static(path.join(__dirname, "assets")));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// API Routes
+// ======================
+// 🔗 API Routes
+// ======================
 app.use("/api/auth", authRoutes);
 app.use("/api/cars", carRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/config/paypal", configRoutes);
 
-// Connect DB & Start Server
+// ======================
+// ⚡ DB Connection & Server Start
+// ======================
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
     console.log("✅ MongoDB connected");
-    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+    app.listen(port, () =>
+      console.log(`🚀 Server is running on http://localhost:${port}`)
+    );
   })
-  .catch((err) => console.error("❌ MongoDB connection failed:", err));
+  .catch((err) => {
+    console.error("❌ MongoDB connection failed:", err);
+  });
