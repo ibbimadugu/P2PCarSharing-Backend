@@ -1,7 +1,8 @@
-import * as paypal from "@paypal/checkout-server-sdk";
+import * as paypal from "@paypal/checkout-server-sdk"; // PayPal SDK
 import dotenv from "dotenv";
 dotenv.config();
 
+// Create and return PayPal sandbox environment
 function environment() {
   const clientId = process.env.PAYPAL_CLIENT_ID_SANDBOX;
   const clientSecret = process.env.PAYPAL_CLIENT_SECRET_SANDBOX;
@@ -14,33 +15,38 @@ function environment() {
   return new paypal.core.SandboxEnvironment(clientId, clientSecret);
 }
 
+// Create and return a PayPal HTTP client
 function client() {
   return new paypal.core.PayPalHttpClient(environment());
 }
 
+// @desc    Create a PayPal order
+// @route   POST /api/create-order
+// @access  Private
 export const createOrder = async (req, res) => {
   console.log("🔔 /create-order route hit");
 
-  // Correctly access the OrdersCreateRequest from the 'paypal' module
   const request = new paypal.orders.OrdersCreateRequest();
-  request.headers["Prefer"] = "return=representation";
+  request.headers["Prefer"] = "return=representation"; // Request full order representation in response
 
-  // Correct way to use requestBody with an object
+  // Build the order request body
   request.requestBody({
     intent: "CAPTURE",
     purchase_units: [
       {
         amount: {
           currency_code: "USD",
-          value: "10.00", // hardcoded for now
+          value: "10.00", // Hardcoded amount for testing
         },
       },
     ],
   });
 
   try {
+    // Execute the order creation request
     const order = await client().execute(request);
     console.log("✅ PayPal order created:", order.result.id);
+
     res.status(201).json({ orderID: order.result.id });
   } catch (err) {
     console.error("❌ PayPal order creation failed:", err);

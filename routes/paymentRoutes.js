@@ -5,10 +5,11 @@ import paypal from "../config/paypal.js";
 
 const router = express.Router();
 
-// Capture PayPal order and update DB
+// Capture PayPal order and update Booking and Order in the database
 router.post("/capture-order", async (req, res) => {
   const { orderID, bookingId } = req.body;
 
+  // Check if both orderID and bookingId are provided
   if (!orderID || !bookingId) {
     return res
       .status(400)
@@ -16,12 +17,14 @@ router.post("/capture-order", async (req, res) => {
   }
 
   try {
+    // Initialize the PayPal order capture request
     const request = new paypal.OrdersCaptureRequest(orderID);
-    request.requestBody({});
+    request.requestBody({}); // Empty body to just capture the payment
 
-    // ✅ Capture the payment
+    // ✅ Capture the payment via PayPal API
     const capture = await paypal.client().execute(request);
 
+    // Collect payment details from PayPal response
     const paymentDetails = {
       id: capture.result.id,
       status: capture.result.status,
@@ -29,6 +32,7 @@ router.post("/capture-order", async (req, res) => {
       email_address: capture.result?.payer?.email_address || null,
     };
 
+    // If payment was successful, update the booking and order
     if (capture.result.status === "COMPLETED") {
       // ✅ Update Booking as paid
       const updatedBooking = await Booking.findByIdAndUpdate(
@@ -41,7 +45,7 @@ router.post("/capture-order", async (req, res) => {
         { new: true }
       );
 
-      // ✅ Update Order record
+      // ✅ Update the related Order record
       const order = await Order.findOne({ bookingId });
       if (order) {
         order.isPaid = true;
@@ -59,58 +63,7 @@ router.post("/capture-order", async (req, res) => {
       return res.status(400).json({ error: "Payment not completed" });
     }
   } catch (err) {
-    console.error(
-      "❌ Error capturing PayPal order:",
-      err?.response?.data || err
-    );
-    res.status(500).json({ error: "Unable to capture PayPal payment" });
-  }
-});
-
-// Capture PayPal order and update DB
-router.post("/capture-order", async (req, res) => {
-  const { orderID, bookingId } = req.body;
-
-  if (!orderID || !bookingId) {
-    return res
-      .status(400)
-      .json({ error: "Order ID and Booking ID are required" });
-  }
-
-  try {
-    const request = new paypal.OrdersCaptureRequest(orderID);
-    request.requestBody({});
-
-    // ✅ FIXED: Use the correct PayPal client
-    const capture = await paypal.client().execute(request);
-
-    const booking = await Booking.findById(bookingId);
-    if (!booking) {
-      return res
-        .status(404)
-        .json({ error: "Booking not found during capture" });
-    }
-
-    // Mark booking as paid
-    booking.paid = true;
-    await booking.save();
-
-    // Update Order record
-    const order = await Order.findOne({ bookingId });
-    if (order) {
-      order.isPaid = true;
-      order.paidAt = new Date();
-      order.paymentResult = {
-        id: capture.result.id,
-        status: capture.result.status,
-        update_time: capture.result.update_time,
-        email_address: capture.result?.payer?.email_address || null,
-      };
-      await order.save();
-    }
-
-    res.json({ message: "Payment successful", details: capture.result });
-  } catch (err) {
+    // Handle any errors that occurred during payment capture
     console.error(
       "❌ Error capturing PayPal order:",
       err?.response?.data || err
@@ -128,8 +81,10 @@ router.get("/orders", async (req, res) => {
       return res.status(404).json({ error: "No orders found" });
     }
 
+    // Send the fetched orders as the response
     res.json({ orders });
   } catch (err) {
+    // Handle errors during order fetching
     console.error("❌ Error fetching orders:", err);
     res.status(500).json({ error: "Unable to fetch orders" });
   }
@@ -139,19 +94,22 @@ router.get("/orders", async (req, res) => {
 router.get("/orders/:bookingId", async (req, res) => {
   const { bookingId } = req.params;
 
+  // Check if bookingId is provided in the URL params
   if (!bookingId) {
     return res.status(400).json({ error: "Booking ID is required" });
   }
 
   try {
-    // Find the order by bookingId
+    // Find the order using the provided bookingId
     const order = await Order.findOne({ bookingId });
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
     }
 
+    // Send the found order as the response
     res.json({ order });
   } catch (err) {
+    // Handle errors during order fetching by bookingId
     console.error("❌ Error fetching order:", err);
     res.status(500).json({ error: "Unable to fetch order" });
   }

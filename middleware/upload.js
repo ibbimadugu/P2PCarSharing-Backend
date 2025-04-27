@@ -14,11 +14,12 @@ const storage = multer.diskStorage({
     cb(null, "uploads/");
   },
   filename: (req, file, cb) => {
+    // Save file with a timestamp to avoid name collisions
     cb(null, `${Date.now()}-${file.originalname.replace(/\s+/g, "-")}`);
   },
 });
 
-// File filter (optional, restrict to images)
+// File filter to allow only image uploads
 const fileFilter = (req, file, cb) => {
   const allowedTypes = /jpeg|jpg|png|gif/;
   const extname = allowedTypes.test(
@@ -32,6 +33,7 @@ const fileFilter = (req, file, cb) => {
   cb("Only images are allowed");
 };
 
+// Initialize multer upload with storage and file filter
 const upload = multer({ storage, fileFilter });
 
 export default upload;
